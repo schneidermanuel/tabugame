@@ -1,0 +1,16 @@
+{
+    "name": "brainyxs/tabubotapi",
+    "description": "api for tabubot",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "brainyxs"
+        }
+    ],
+    "require": {
+        "vlucas/phpdotenv": "^5.5",
+        "ext-mysqli": "*",
+      "ext-json": "*"
+    }
+}
