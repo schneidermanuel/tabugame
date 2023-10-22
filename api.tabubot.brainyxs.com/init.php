@@ -2,10 +2,7 @@
 require 'vendor/autoload.php';
 
 $_HEADER = getallheaders();
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
 
-require 'core/connect.php';
 header('Access-Control-Allow-Origin: http://localhost:8080');
 header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization');
 header("Access-Control-Allow-Credentials: true");

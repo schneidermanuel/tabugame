@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cc509184769a3be760e93bfa3e7e249c",
+    "content-hash": "29dded37adb5ec84ace9db285b124f8b",
     "packages": [
         {
             "name": "graham-campbell/result-type",
@@ -142,6 +142,50 @@
                 }
             ],
             "time": "2023-02-25T19:38:58+00:00"
+        },
+        {
+            "name": "schneidermanuel/dynalinker",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/schneidermanuel/DynaLinker.git",
+                "reference": "12c433b667500a8d30436a10d02e9f1c03457e05"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/schneidermanuel/DynaLinker/zipball/12c433b667500a8d30436a10d02e9f1c03457e05",
+                "reference": "12c433b667500a8d30436a10d02e9f1c03457e05",
+                "shasum": ""
+            },
+            "require": {
+                "ext-mysqli": "*",
+                "vlucas/phpdotenv": "^5.5"
+            },
+            "require-dev": {
+                "vlucas/phpdotenv": "^5.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Schneidermanuel\\Dynalinker\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "BrainyXS",
+                    "email": "brainyxs@gmail.com"
+                }
+            ],
+            "description": "A simple ORM and .ENV Library",
+            "support": {
+                "issues": "https://github.com/schneidermanuel/DynaLinker/issues",
+                "source": "https://github.com/schneidermanuel/DynaLinker/tree/1.0.0"
+            },
+            "time": "2023-10-22T15:39:52+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
@@ -483,8 +527,9 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "ext-mysqli": "*"
+        "ext-mysqli": "*",
+        "ext-json": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.3.0"
+    "plugin-api-version": "2.6.0"
 }
