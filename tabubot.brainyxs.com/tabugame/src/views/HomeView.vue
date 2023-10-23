@@ -1,15 +1,61 @@
 <template>
-  <hello-world />
+  <v-container class="container">
+    <v-row class="verticalSpacer" />
+    <v-row>
+      <v-spacer></v-spacer>
+      <v-spacer></v-spacer>
+      <v-col style="text-align: center">
+        <v-container>
+          <v-row>
+            <v-col style="text-align: center">
+              <v-btn
+                  color="#5865f2"
+                  style="color: white"
+                  href="https://discord.com/api/oauth2/authorize?client_id=1120061782082453515&redirect_uri=https%3A%2F%2Flocalhost%3A8080&response_type=code&scope=identify"
+                  block >
+                <font-awesome-icon icon="fa-brands fa-discord" />
+                &emsp;Login with Discord
+              </v-btn>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col style="text-align: center;">
+              <v-btn block>
+                Host a Game
+              </v-btn>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col style="text-align: center;">
+              <v-btn block>
+          Join existing Game
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-col>
+      <v-spacer></v-spacer>
+      <v-spacer></v-spacer>
+    </v-row>
+    <v-row class="verticalSpacer" />
+  </v-container>
 </template>
 
 <script>
-  import HelloWorld from '../components/HelloWorld'
 
   export default {
     name: 'Home',
 
-    components: {
-      HelloWorld,
-    },
   }
 </script>
+
+
+<style>
+.verticalSpacer
+{
+  height: 20%;
+}
+.container {
+  height: 100%;
+}
+</style>
