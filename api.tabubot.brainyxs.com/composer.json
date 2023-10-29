@@ -17,6 +17,7 @@
     "vlucas/phpdotenv": "^5.5",
     "ext-mysqli": "*",
     "ext-json": "*",
-    "schneidermanuel/dynalinker": "^1.0"
+    "schneidermanuel/dynalinker": "^1.0",
+    "firebase/php-jwt": "^6.9"
   }
 }
