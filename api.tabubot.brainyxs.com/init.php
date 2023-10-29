@@ -1,6 +1,11 @@
 <?php
+
+use Schneidermanuel\Dynalinker\Core\Dynalinker;
+use tabubotapi\Controllers\AuthenticationController;
+
 require 'vendor/autoload.php';
 
+ini_set('display_errors', 1); ini_set('display_startup_errors', 1); error_reporting(E_ALL);
 $_HEADER = getallheaders();
 
 header('Access-Control-Allow-Origin: http://localhost:8080');
@@ -16,3 +21,6 @@ if ($method == "OPTIONS") {
 }
 
 $_POST = json_decode(file_get_contents("php://input"), true);
+$dynalinker = Dynalinker::Get();
+$dynalinker->AddController("auth", new AuthenticationController());
+$dynalinker->Run();

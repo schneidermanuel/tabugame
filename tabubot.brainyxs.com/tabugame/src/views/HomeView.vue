@@ -11,7 +11,7 @@
               <v-btn
                   color="#5865f2"
                   style="color: white"
-                  href="https://discord.com/api/oauth2/authorize?client_id=1120061782082453515&redirect_uri=https%3A%2F%2Flocalhost%3A8080&response_type=code&scope=identify"
+                  href="https://discord.com/api/oauth2/authorize?client_id=1120061782082453515&redirect_uri=https://api.tabubot.brainyxs.com/auth/callback&response_type=code&scope=identify"
                   block >
                 <font-awesome-icon icon="fa-brands fa-discord" />
                 &emsp;Login with Discord

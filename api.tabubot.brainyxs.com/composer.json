@@ -1,17 +1,22 @@
 {
-    "name": "brainyxs/tabubotapi",
-    "description": "api for tabubot",
-    "type": "project",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "brainyxs"
-        }
-    ],
-    "require": {
-        "vlucas/phpdotenv": "^5.5",
-        "ext-mysqli": "*",
-      "ext-json": "*",
-        "schneidermanuel/dynalinker": "^1.0"
+  "name": "brainyxs/tabubotapi",
+  "description": "api for tabubot",
+  "type": "project",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "tabubotapi\\": "src/"
     }
+  },
+  "authors": [
+    {
+      "name": "brainyxs"
+    }
+  ],
+  "require": {
+    "vlucas/phpdotenv": "^5.5",
+    "ext-mysqli": "*",
+    "ext-json": "*",
+    "schneidermanuel/dynalinker": "^1.0"
+  }
 }
