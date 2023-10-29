@@ -2,6 +2,7 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import vuetify from './plugins/vuetify'
+import store from './store'
 
 Vue.config.productionTip = false
 
@@ -19,8 +20,10 @@ library.add(faDiscord)
 Vue.component('font-awesome-icon', FontAwesomeIcon)
 
 Vue.config.productionTip = false
+Vue.use(require('vue-cookies'))
 new Vue({
   router,
+  store,
   vuetify,
   render: function (h) { return h(App) }
 }).$mount('#app')
