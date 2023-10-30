@@ -14,7 +14,7 @@
 
 <script>
 
-import Loader from "@/components/Loader.vue";
+import Loader from "@/components/Shared/Loader.vue";
 
 export default {
   components: {
@@ -25,7 +25,6 @@ export default {
       let token = this.$router.currentRoute.params["token"];
       this.$cookies.set("jwt", token)
       this.$store.state.loading = true;
-      console.log(token);
       if (token != null) {
         fetch("https://api.tabubot.brainyxs.com/user/me", {
           method: 'GET',
@@ -37,9 +36,8 @@ export default {
               if (data.authenticated) {
                 this.$store.state.user.username = data.user.username;
                 this.$store.state.user.pburl = data.user.pburl;
+                this.$store.state.user.token = token;
                 this.$store.state.loading = false;
-                this.$store.state.inited = true;
-                console.log(this.$store.state.user)
                 this.$router.push("/");
                 this.$store.state.snackbar.timeout = 2000;
                 this.$store.state.snackbar.color = "green";

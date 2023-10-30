@@ -82,7 +82,8 @@ class AuthenticationController
             'iat' => time(),
             'sub' => $userId,
             'username' => $displayName,
-            'pburl' => $avatar_url
+            'pburl' => $avatar_url,
+            'apitoken' => $token
         ];
         $jwt = JWT::encode($payload, $key, 'HS256');
         return $jwt;

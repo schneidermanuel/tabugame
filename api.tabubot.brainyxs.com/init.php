@@ -2,6 +2,7 @@
 
 use Schneidermanuel\Dynalinker\Core\Dynalinker;
 use tabubotapi\Controllers\AuthenticationController;
+use tabubotapi\Controllers\CardsetController;
 use tabubotapi\Controllers\UserController;
 
 require 'vendor/autoload.php';
@@ -24,4 +25,5 @@ $_POST = json_decode(file_get_contents("php://input"), true);
 $dynalinker = Dynalinker::Get();
 $dynalinker->AddController("auth", new AuthenticationController());
 $dynalinker->AddController("user", new UserController());
+$dynalinker->AddController("cardset", new CardsetController());
 $dynalinker->Run();

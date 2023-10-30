@@ -12,10 +12,10 @@ export default new Vuex.Store({
             message: ''
         },
         loading: false,
-        inited: false,
         user: {
             username: null,
             pburl: null,
+            token: null,
         }
     },
     getters: {

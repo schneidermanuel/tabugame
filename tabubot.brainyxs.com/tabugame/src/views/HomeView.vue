@@ -3,7 +3,6 @@
     <v-row class="verticalSpacer"/>
     <v-row>
       <v-spacer></v-spacer>
-      <v-spacer></v-spacer>
       <v-col style="text-align: center">
         <v-container>
           <v-row>
@@ -39,9 +38,11 @@
               </v-btn>
               <v-btn block
                      v-show="this.$store.state.user.username != null"
+                     v-on:click="toggleHostAGame"
               >
                 Host a Game
               </v-btn>
+              <host-a-game-form v-show="this.hostGame.formOpen" v-if="this.$store.state.user.username != null"></host-a-game-form>
             </v-col>
           </v-row>
           <v-row>
@@ -62,19 +63,26 @@
         </v-container>
       </v-col>
       <v-spacer></v-spacer>
-      <v-spacer></v-spacer>
     </v-row>
     <v-row class="verticalSpacer"/>
   </v-container>
 </template>
-
 <script>
+
+import HostAGameForm from "@/components/Home/HostAGameForm.vue";
 
 export default {
   name: 'Home',
-  methods:{
-    LogOut()
-    {
+  components: {HostAGameForm},
+  data() {
+    return {
+      hostGame: {
+        formOpen: false
+      }
+    }
+  },
+  methods: {
+    LogOut() {
       this.$cookies.remove("jwt");
       this.$store.state.user.username = null;
       this.$store.state.user.pburl = null;
@@ -82,7 +90,12 @@ export default {
       this.$store.state.snackbar.color = "orange";
       this.$store.state.snackbar.message = "Logged out";
       this.$store.state.snackbar.show = true;
+      this.hostGame.formOpen = false;
 
+    },
+    toggleHostAGame()
+    {
+      this.hostGame.formOpen = !this.hostGame.formOpen;
     }
   }
 
