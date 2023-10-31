@@ -95,8 +95,7 @@ export default {
       })
           .then(data => data.json())
           .then(data => {
-            if (!data.Id)
-            {
+            if (!data.Id) {
               this.$store.state.snackbar.color = "red";
               this.$store.state.snackbar.message = "The selected Cardset could not be found";
               this.$store.state.snackbar.timeout = 3500;
@@ -104,10 +103,35 @@ export default {
               return;
             }
             this.$store.state.loading = true;
+            fetch("https://api.tabubot.brainyxs.com/game/create", {
+              method: "POST",
+              headers: {
+                "Authorization": "Bearer " + this.$store.state.user.token
+              },
+              body: JSON.stringify({
+                SET_ID: selectedSetId
+              })
+
+            })
+                .then(data => {
+                  if (!data.ok) {
+                    this.$store.state.snackbar.color = "red";
+                    this.$store.state.snackbar.message = "The game could not be created";
+                    this.$store.state.snackbar.timeout = 3500;
+                    this.$store.state.snackbar.show = true;
+                    return;
+                  }
+                  return data;
+                })
+                .then(data => data.json())
+                .then(data => {
+                  const gameCode = data.Game;
+                  this.$router.push("/game/" + gameCode);
+                  this.$store.state.loading = false;
+                });
           });
     }
-  }
-  ,
+  },
   async created() {
     this.Init();
   }

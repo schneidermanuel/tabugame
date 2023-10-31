@@ -208,16 +208,16 @@
         },
         {
             "name": "schneidermanuel/dynalinker",
-            "version": "1.0.6",
+            "version": "1.0.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/schneidermanuel/DynaLinker.git",
-                "reference": "66ad7d09ec4ef08c9f320eee315d7a9f8fa02573"
+                "reference": "672a38875cad5d5f8a8fcf20607fa8f9d2486fce"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/schneidermanuel/DynaLinker/zipball/66ad7d09ec4ef08c9f320eee315d7a9f8fa02573",
-                "reference": "66ad7d09ec4ef08c9f320eee315d7a9f8fa02573",
+                "url": "https://api.github.com/repos/schneidermanuel/DynaLinker/zipball/672a38875cad5d5f8a8fcf20607fa8f9d2486fce",
+                "reference": "672a38875cad5d5f8a8fcf20607fa8f9d2486fce",
                 "shasum": ""
             },
             "require": {
@@ -246,9 +246,9 @@
             "description": "A simple ORM and .ENV Library",
             "support": {
                 "issues": "https://github.com/schneidermanuel/DynaLinker/issues",
-                "source": "https://github.com/schneidermanuel/DynaLinker/tree/1.0.6"
+                "source": "https://github.com/schneidermanuel/DynaLinker/tree/1.0.7"
             },
-            "time": "2023-10-30T16:19:56+00:00"
+            "time": "2023-10-31T19:29:47+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
