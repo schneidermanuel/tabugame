@@ -55,9 +55,11 @@
               </v-btn>
               <v-btn block
                      v-show="this.$store.state.user.username != null"
+                     v-on:click="toggleJoinAGame"
               >
                 Join existing Game
               </v-btn>
+              <JoinAGame v-show="this.joinGame.formOpen"/>
             </v-col>
           </v-row>
         </v-container>
@@ -70,13 +72,17 @@
 <script>
 
 import HostAGameForm from "@/components/Home/HostAGameForm.vue";
+import JoinAGame from "@/components/Home/JoinAGame.vue";
 
 export default {
   name: 'Home',
-  components: {HostAGameForm},
+  components: {JoinAGame, HostAGameForm},
   data() {
     return {
       hostGame: {
+        formOpen: false
+      },
+      joinGame: {
         formOpen: false
       }
     }
@@ -96,6 +102,12 @@ export default {
     toggleHostAGame()
     {
       this.hostGame.formOpen = !this.hostGame.formOpen;
+      this.joinGame.formOpen = false;
+    },
+    toggleJoinAGame()
+    {
+      this.joinGame.formOpen = !this.joinGame.formOpen;
+      this.hostGame.formOpen = false;
     }
   }
 

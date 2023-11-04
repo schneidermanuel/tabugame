@@ -27,7 +27,7 @@ class PlayerAdder
 
         $filter = new PlayerEntity();
         $filter->GameId = $gameId;
-        $filter->DdId = $userId;
+        $filter->DcId = $userId;
         $userInGame = $this->playerStore->LoadWithFilter($filter);
         if (count($userInGame) != 0) {
             return;
@@ -53,7 +53,7 @@ class PlayerAdder
         $host = $this->AmITheHost(count($bluePlayers), count($redPlayers));
 
         $player = new PlayerEntity();
-        $player->DdId = $userId;
+        $player->DcId = $userId;
         $player->GameId = $gameId;
         $player->Name = $user->username;
         $player->Team = $teamToJoin;

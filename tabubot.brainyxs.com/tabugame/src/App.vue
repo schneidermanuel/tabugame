@@ -27,8 +27,8 @@
       </template>
     </v-snackbar>
     <v-main>
-      <router-view v-show="!this.$store.state.loading"/>
-      <Loader v-show="this.$store.state.loading" />
+      <router-view v-if="this.$store.state.inited" v-show="!this.$store.state.loading"/>
+      <Loader v-show="this.$store.state.loading"/>
     </v-main>
   </v-app>
 </template>
@@ -59,11 +59,13 @@ export default {
                 this.$store.state.user.pburl = data.user.pburl;
                 this.$store.state.user.token = token;
                 this.$store.state.loading = false;
+                this.$store.state.inited = true;
               }
             });
       } else {
 
         this.$store.state.loading = false;
+        this.$store.state.inited = true;
       }
     }
   },

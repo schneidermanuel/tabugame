@@ -17,7 +17,7 @@ class PlayerEntity
     public $Name;
 
     #[Persist("userId")]
-    public $DdId;
+    public $DcId;
 
     #[Persist("team")]
     public $Team;
@@ -27,4 +27,7 @@ class PlayerEntity
 
     #[Persist("isHost")]
     public $IsHost;
+
+    #[Persist("lastStamp")]
+    public $LastSeen;
 }
