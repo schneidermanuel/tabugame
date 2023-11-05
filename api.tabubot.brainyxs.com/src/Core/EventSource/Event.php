@@ -9,10 +9,10 @@ class Event
         header('Content-Type: text/event-stream');
         header('Cache-Control: no-cache');
         header('X-Accel-Buffering: no');
-        self::SendData("Event Source started");
+        self::SendData("Event Source started", "INFO");
     }
 
-    public static function SendData(string $data, $type = null)
+    public static function SendData($data, $type = null)
     {
         $res = new \stdClass();
         $res->Type = $type;

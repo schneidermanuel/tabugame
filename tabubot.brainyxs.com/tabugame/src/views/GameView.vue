@@ -5,7 +5,7 @@
     </v-row>
     <v-row>
       <v-col cols="12">
-        <GameLobby v-if="state.isLobby"/>
+        <GameLobby ref="lobby" v-if="state.isLobby"/>
       </v-col>
     </v-row>
   </v-container>
@@ -61,6 +61,11 @@ export default {
   },
   async created() {
     this.init();
+  },
+  beforeRouteLeave(to, from, next)
+  {
+    this.$refs.lobby.Stop();
+    next();
   }
 }
 </script>

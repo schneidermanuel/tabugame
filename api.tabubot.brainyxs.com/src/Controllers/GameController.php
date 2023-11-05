@@ -121,14 +121,37 @@ class GameController
         echo json_encode($result);
     }
 
-    #[HttpGet("[a-zA-Z0-9]{4}/lobby")]
-    public function LobbyEventStream($gameCode)
+    #[HttpGet("[a-zA-Z0-9]{4}/otp")]
+    public function GenerateOtp($gameCode)
+    {
+        list($game, $playerEntity) = $this->getPlayerGame($gameCode);
+        echo Authenticator::GenerateOtpCode($playerEntity->Id);
+    }
+
+    #[HttpGet("[a-zA-Z0-9]{4}/lobby/.*")]
+    public function LobbyEventStream($gameCode, $otp)
     {
         Event::StartSource();
+        $playerEntity = Authenticator::Redeem($otp);
+        $playersFilter = new PlayerEntity();
+        $playersFilter->GameId = $playerEntity->GameId;
+        $players = $this->playerStore->LoadWithFilter($playersFilter);
+        $initData = new \stdClass();
+        $initData->Players = array();
+        foreach ($players as $player) {
+            $initPlayer = new \stdClass();
+            $initPlayer->Name = $player->Name;
+            $dcUser = json_decode($this->apiHelper->GetWithBotAutherization("https://discord.com/api/v10/users/$player->DcId"));
+            $avatar_url = "https://cdn.discordapp.com/avatars/" . $dcUser->id . "/" . $dcUser->avatar . ".png?size=4096";
+            $initPlayer->ImageUrl = $avatar_url;
+            $initPlayer->IsHost = $player->IsHost;
+            $initPlayer->Team = $player->Team;
+            $initData->Players[] = $initPlayer;
+        }
+        Event::SendData($initData, "INIT");
         while (!connection_aborted()) {
-            Event::SendData("Ping");
+            Event::SendData("PING", "IGNORE");
             sleep(1);
-
         }
     }
 

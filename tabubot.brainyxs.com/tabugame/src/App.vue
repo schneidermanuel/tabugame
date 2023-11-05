@@ -72,7 +72,8 @@ export default {
   async created() {
     this.init();
   }
-};
+}
+;
 </script>
 
 <style>
