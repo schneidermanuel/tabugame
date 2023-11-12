@@ -6,21 +6,27 @@
       <v-spacer/>
     </v-row>
     <v-row>
-      <v-col cols="6" md="4" style="text-align: center;">
+      <v-col cols="6" md="3" style="text-align: center;">
         <h4>Team Blue<br><br></h4>
-        <div style="height: 100%; background-color: red">
-          <v-avatar v-for="player in lobby.bluePlayers" size="80" class="userAvatar">
-            <img :src="player.ImageUrl"/>
-          </v-avatar>
+        <div style="height: 100%; background-color: red" class="avatarContainer">
+          <div v-for="player in lobby.bluePlayers">
+            <h5>{{ player.Name}}</h5>
+            <v-avatar size="80" class="userAvatar">
+              <img :src="player.ImageUrl"/>
+            </v-avatar>
+          </div>
         </div>
       </v-col>
       <v-spacer></v-spacer>
-      <v-col cols="6" md="4" style="text-align: center">
+      <v-col cols="6" md="3" style="text-align: center">
         <h4>Team Red<br><br></h4>
-        <div style="height: 100%; background-color: red">
-          <v-avatar v-for="player in lobby.redPlayers" size="80" class="userAvatar">
-            <img :src="player.ImageUrl"/>
-          </v-avatar>
+        <div style="height: 100%; background-color: red" class="avatarContainer">
+          <div v-for="player in lobby.redPlayers">
+            <h5>{{ player.Name}}</h5>
+            <v-avatar size="80" class="userAvatar">
+              <img :src="player.ImageUrl"/>
+            </v-avatar>
+          </div>
         </div>
       </v-col>
     </v-row>
@@ -86,6 +92,12 @@ export default {
 
 <style>
 .userAvatar {
-  margin-top: 2%;
+  margin-top: 5%;
+}
+
+.avatarContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 </style>
