@@ -47,12 +47,10 @@ export default {
           .then(data => {
             let state = data.State;
             let players = data.Players;
-            if (state == "OPEN")
-            {
+            if (state == "OPEN") {
               this.state.isLobby = true;
             }
-            if (state == "GAME")
-            {
+            if (state == "GAME") {
               this.state.isGame = true;
             }
             this.$store.state.loading = false;
@@ -62,9 +60,11 @@ export default {
   async created() {
     this.init();
   },
-  beforeRouteLeave(to, from, next)
-  {
-    this.$refs.lobby.Stop();
+  beforeRouteLeave(to, from, next) {
+    if (this.$refs.lobby) {
+
+      this.$refs.lobby.Stop();
+    }
     next();
   }
 }

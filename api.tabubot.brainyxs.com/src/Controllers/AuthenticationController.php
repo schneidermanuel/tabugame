@@ -4,9 +4,17 @@ namespace tabubotapi\Controllers;
 
 use Firebase\JWT\JWT;
 use Schneidermanuel\Dynalinker\Controller\HttpGet;
+use tabubotapi\Core\Api\DiscordApiHelper;
 
 class AuthenticationController
 {
+    private $apiHelper;
+
+    public function __construct()
+    {
+        $this->apiHelper = new DiscordApiHelper();
+    }
+
     #[HttpGet("callback")]
     public function CodeCallback()
     {
@@ -76,7 +84,7 @@ class AuthenticationController
         $key = $_ENV["JWT_SECRET"];
         $displayName = $result->user->global_name;
         $userId = $result->user->id;
-        $avatar_url = "https://cdn.discordapp.com/avatars/" . $result->user->id . "/" . $result->user->avatar . ".png?size=4096";
+        $avatar_url = $this->apiHelper->GetAvatarUrl($result);
         $payload = [
             'iss' => "schneidermanuel",
             'iat' => time(),

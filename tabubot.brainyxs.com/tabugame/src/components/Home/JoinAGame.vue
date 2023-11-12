@@ -55,7 +55,30 @@ export default {
               this.code = null;
               return;
             }
-            this.$router.push("/game/" + this.code);
+            fetch("https://api.tabubot.brainyxs.com/game/" + this.code + "/join",
+                {
+                  method: "POST",
+                  headers: {
+                    "Authorization": "Bearer " + token
+                  }
+                })
+                .then(data => data.json())
+                .then(data => {
+                  console.log(data)
+                  if (data.Status == "ERROR") {
+                    this.$store.state.snackbar.message = data.Message;
+                    this.$store.state.snackbar.color = "Red";
+                    this.$store.state.snackbar.timeout = 5000;
+                    this.$store.state.snackbar.show = true;
+                    return;
+                  }
+                  this.$store.state.snackbar.message = data.Message;
+                  this.$store.state.snackbar.color = "Green";
+                  this.$store.state.snackbar.timeout = 3000;
+                  this.$store.state.snackbar.show = true;
+
+                  this.$router.push("/game/" + this.code);
+                });
           })
     }
   }

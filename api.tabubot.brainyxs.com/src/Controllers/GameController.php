@@ -9,6 +9,7 @@ use tabubotapi\Core\Api\DiscordApiHelper;
 use tabubotapi\Core\Authenticator;
 use tabubotapi\Core\EventSource\Event;
 use tabubotapi\Core\Game\PlayerAdder;
+use tabubotapi\Core\Response;
 use tabubotapi\Entities\CardSetEntity;
 use tabubotapi\Entities\GameEntity;
 use tabubotapi\Entities\PlayerEntity;
@@ -37,7 +38,6 @@ class GameController
             http_response_code(401);
             die();
         }
-        $user = Authenticator::GetUser();
         $tabuSetId = $_POST['SET_ID'];
         if (!isset($tabuSetId)) {
             http_response_code(400);
@@ -110,7 +110,7 @@ class GameController
         foreach ($playersInGame as $playerInGame) {
             $playerResult = new \stdClass();
             $dcUser = json_decode($this->apiHelper->GetWithBotAutherization("https://discord.com/api/v10/users/$playerInGame->DcId"));
-            $avatar_url = "https://cdn.discordapp.com/avatars/" . $dcUser->id . "/" . $dcUser->avatar . ".png?size=4096";
+            $avatar_url = $this->apiHelper->GetAvatarUrl($dcUser);
             $playerResult->PbUrl = $avatar_url;
             $playerResult->Username = $dcUser->global_name;
             $playerResult->Team = $playerInGame->Team;
@@ -119,6 +119,32 @@ class GameController
         }
 
         echo json_encode($result);
+    }
+
+    #[HttpPost("[a-zA-Z0-9]{4}/join")]
+    public function JoinGame($gameCode)
+    {
+        if (!Authenticator::IsAuthenticated()) {
+            http_response_code(401);
+            die();
+        }
+        $user = Authenticator::GetUser();
+        $game = $this->GetGameByCode($gameCode);
+        $existingUserFilter = new PlayerEntity();
+        $existingUserFilter->GameId = $game->Id;
+        $existingUserFilter->DcId = $user->sub;
+        $existingUsers = $this->playerStore->LoadWithFilter($existingUserFilter);
+        if (count($existingUsers) != 0) {
+            Response::Send("Unable to join game, user is already in it", "ERROR");
+        }
+        $newPlayer = new PlayerEntity();
+        $newPlayer->DcId = $user->sub;
+        $newPlayer->GameId = $game->Id;
+        $newPlayer->Team = "blue";
+        $this->playerStore->SaveOrUpdate($newPlayer);
+
+        Response::Send("Joined Game");
+
     }
 
     #[HttpGet("[a-zA-Z0-9]{4}/otp")]
@@ -142,7 +168,7 @@ class GameController
             $initPlayer = new \stdClass();
             $initPlayer->Name = $player->Name;
             $dcUser = json_decode($this->apiHelper->GetWithBotAutherization("https://discord.com/api/v10/users/$player->DcId"));
-            $avatar_url = "https://cdn.discordapp.com/avatars/" . $dcUser->id . "/" . $dcUser->avatar . ".png?size=4096";
+            $avatar_url = $this->apiHelper->GetAvatarUrl($dcUser);
             $initPlayer->ImageUrl = $avatar_url;
             $initPlayer->IsHost = $player->IsHost;
             $initPlayer->Team = $player->Team;

@@ -7,11 +7,21 @@
     </v-row>
     <v-row>
       <v-col cols="6" md="4" style="text-align: center;">
-        <h4>Team Blue</h4>
+        <h4>Team Blue<br><br></h4>
+        <div style="height: 100%; background-color: red">
+          <v-avatar v-for="player in lobby.bluePlayers" size="80" class="userAvatar">
+            <img :src="player.ImageUrl"/>
+          </v-avatar>
+        </div>
       </v-col>
       <v-spacer></v-spacer>
       <v-col cols="6" md="4" style="text-align: center">
-        <h4>Team Red</h4>
+        <h4>Team Red<br><br></h4>
+        <div style="height: 100%; background-color: red">
+          <v-avatar v-for="player in lobby.redPlayers" size="80" class="userAvatar">
+            <img :src="player.ImageUrl"/>
+          </v-avatar>
+        </div>
       </v-col>
     </v-row>
   </v-container>
@@ -24,6 +34,8 @@ export default {
     return {
       lobby: {
         Players: [],
+        bluePlayers: [],
+        redPlayers: [],
         host: null
       },
       eventSource: null
@@ -31,6 +43,7 @@ export default {
   },
   methods: {
     init() {
+      this.$store.state.loading = true;
       let code = this.$router.currentRoute.params["id"]
       let token = this.$store.state.user.token;
       fetch("https://api.tabubot.brainyxs.com/game/" + code + "/otp", {
@@ -49,8 +62,15 @@ export default {
               }
               if (data.Type == "INIT") {
                 this.lobby.Players = data.Content.Players;
-                console.log(this.lobby.Players);
+                this.lobby.Players.forEach(player => {
+                  if (player.Team == "blue") {
+                    this.lobby.bluePlayers.push(player);
+                  } else {
+                    this.lobby.redPlayers.push(player);
+                  }
+                });
               }
+              this.$store.state.loading = false;
             }
           });
     },
@@ -65,5 +85,7 @@ export default {
 </script>
 
 <style>
-
+.userAvatar {
+  margin-top: 2%;
+}
 </style>
