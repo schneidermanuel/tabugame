@@ -128,20 +128,9 @@ class GameController
             http_response_code(401);
             die();
         }
-        $user = Authenticator::GetUser();
         $game = $this->GetGameByCode($gameCode);
-        $existingUserFilter = new PlayerEntity();
-        $existingUserFilter->GameId = $game->Id;
-        $existingUserFilter->DcId = $user->sub;
-        $existingUsers = $this->playerStore->LoadWithFilter($existingUserFilter);
-        if (count($existingUsers) != 0) {
-            Response::Send("Unable to join game, user is already in it", "ERROR");
-        }
-        $newPlayer = new PlayerEntity();
-        $newPlayer->DcId = $user->sub;
-        $newPlayer->GameId = $game->Id;
-        $newPlayer->Team = "blue";
-        $this->playerStore->SaveOrUpdate($newPlayer);
+        $adder = new PlayerAdder();
+        $adder->AddCurrentUserToGame($game->Id);
 
         Response::Send("Joined Game");
 

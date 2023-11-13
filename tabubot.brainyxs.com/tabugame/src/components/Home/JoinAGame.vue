@@ -64,7 +64,6 @@ export default {
                 })
                 .then(data => data.json())
                 .then(data => {
-                  console.log(data)
                   if (data.Status == "ERROR") {
                     this.$store.state.snackbar.message = data.Message;
                     this.$store.state.snackbar.color = "Red";

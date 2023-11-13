@@ -4,6 +4,7 @@ namespace tabubotapi\Core\Game;
 
 use Schneidermanuel\Dynalinker\Core\Dynalinker;
 use tabubotapi\Core\Authenticator;
+use tabubotapi\Core\Response;
 use tabubotapi\Entities\GameEntity;
 use tabubotapi\Entities\PlayerEntity;
 
@@ -30,11 +31,13 @@ class PlayerAdder
         $filter->DcId = $userId;
         $userInGame = $this->playerStore->LoadWithFilter($filter);
         if (count($userInGame) != 0) {
-            return;
+            Response::Send("Already in game", "ERROR");
+            die();
         }
         $game = $this->gameStore->LoadById($gameId);
         if (!isset($game) || $game->State != 'OPEN') {
-            return;
+            Response::Send("Game not found", "ERROR");
+            die();
         }
 
         $bluePlayerFilter = new PlayerEntity();
@@ -75,6 +78,6 @@ class PlayerAdder
         if ($blueCount + $redCount == 0) {
             return true;
         }
-        return false;
+        return 0;
     }
 }
