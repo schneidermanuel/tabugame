@@ -8,36 +8,40 @@
     <v-row>
       <v-col cols="6" md="3" style="text-align: center;">
         <h4>Team Blue<br><br></h4>
-        <div style="background-color: #4fcaff; border-radius: 12px" class="avatarContainer">
-          <div v-for="player in lobby.bluePlayers">
-            <h5>{{ player.Name }}</h5>
-            <v-avatar size="80" class="userAvatar" :class="{ host: player.IsHost == 1 }">
-              <img :src="player.ImageUrl"/>
-            </v-avatar>
-          </div>
+        <div style="background-color: #4fcaff; border-radius: 12px" class="avatarContainer" >
+          <draggable :list="lobby.bluePlayers" :group="isHost == 1 ? 'players' : null">
+            <div v-for="player in lobby.bluePlayers">
+              <h5>{{ player.Name }}</h5>
+              <v-avatar size="80" class="userAvatar" :class="{ host: player.IsHost == 1 }">
+                <img :src="player.ImageUrl"/>
+              </v-avatar>
+            </div>
+          </draggable>
         </div>
       </v-col>
       <v-spacer></v-spacer>
       <v-col cols="6" md="3" style="text-align: center">
         <h4>Team Red<br><br></h4>
         <div style="background-color: #ff3f41; border-radius: 12px" class="avatarContainer">
-          <div v-for="player in lobby.redPlayers">
-            <h5>{{ player.Name }}</h5>
-            <v-avatar size="80" class="userAvatar" :class="{ host: player.IsHost == 1 }">
-              <img :src="player.ImageUrl"/>
-            </v-avatar>
-          </div>
+          <draggable :list="lobby.redPlayers" :group="isHost == 1 ? 'players' : null">
+            <div v-for="player in lobby.redPlayers">
+              <h5>{{ player.Name }}</h5>
+              <v-avatar size="80" class="userAvatar" :class="{ host: player.IsHost == 1 }">
+                <img :src="player.ImageUrl"/>
+              </v-avatar>
+            </div>
+          </draggable>
         </div>
       </v-col>
     </v-row>
     <v-row>
       <v-spacer/>
       <v-col cols="1">
-        <v-btn v-if="this.isHost && !this.canStart" disabled>
+        <v-btn v-if="this.isHost == 1 && !this.canStart" disabled>
           Spiel starten
           <font-awesome-icon icon="play"/>
         </v-btn>
-        <v-btn v-if="this.isHost && this.canStart" v-on:click="startGame">
+        <v-btn v-if="this.isHost == 1 && this.canStart" v-on:click="startGame">
           Spiel starten
           <font-awesome-icon icon="play"/>
         </v-btn>
@@ -47,6 +51,8 @@
 </template>
 
 <script>
+
+import draggable from "vuedraggable";
 
 export default {
   data() {
@@ -60,6 +66,9 @@ export default {
       canStart: false,
       eventSource: null
     }
+  },
+  components: {
+    draggable
   },
   methods: {
     init() {
@@ -130,8 +139,7 @@ export default {
             if (data.Status == "ok") {
               this.$store.state.snackbar.color = "green";
             }
-            if (data.Status == "ERROR")
-            {
+            if (data.Status == "ERROR") {
               this.$store.state.snackbar.color = "red";
             }
             this.$store.state.snackbar.message = data.Message;
@@ -159,6 +167,7 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-height: 50px;
 }
 
 .host {
