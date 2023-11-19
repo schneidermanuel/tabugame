@@ -67,7 +67,7 @@ class PlayerAdder
 
     private function GetTeamToJoin(int $bluePlayers, int $redPlayers): string
     {
-        if ($bluePlayers >= $redPlayers) {
+        if ($bluePlayers <= $redPlayers) {
             return 'blue';
         }
         return 'red';

@@ -66,6 +66,31 @@ class GameController
 
     }
 
+    #[HttpPost("[a-zA-Z0-9]{4}/start")]
+    function StartGame($gameCode)
+    {
+        list($game, $playerEntity) = $this->getPlayerGame($gameCode);
+        if (!$playerEntity->IsHost) {
+            Response::Send("Only the Host can start a Game", "ERROR");
+            die();
+        }
+        $redPlayersFilter = new PlayerEntity();
+        $redPlayersFilter->GameId = $game->Id;
+        $redPlayersFilter->Team = "red";
+        $redPlayers = $this->playerStore->LoadWithFilter($redPlayersFilter);
+        $bluePlayersFilter = new PlayerEntity();
+        $bluePlayersFilter->GameId = $game->Id;
+        $bluePlayersFilter->Team = "blue";
+        $bluePlayers = $this->playerStore->LoadWithFilter($bluePlayersFilter);
+        if (count($bluePlayers) <= 1 || count($redPlayers) <= 1) {
+            Response::Send("Both Teams need at least 2 players", "ERROR");
+            die();
+        }
+        $game->State = 'GAME';
+        $this->gameStore->SaveOrUpdate($game);
+        Response::Send("Game started");
+    }
+
     function gameCode(): string
     {
         $guid = sprintf('%04X', mt_rand(0, 65535));
@@ -153,6 +178,8 @@ class GameController
         $players = $this->playerStore->LoadWithFilter($playersFilter);
         $initData = new \stdClass();
         $initData->Players = array();
+        $initData->IsHost = $playerEntity->IsHost;
+        $displayedPlayersId = array();
         foreach ($players as $player) {
             $initPlayer = new \stdClass();
             $initPlayer->Name = $player->Name;
@@ -162,11 +189,26 @@ class GameController
             $initPlayer->IsHost = $player->IsHost;
             $initPlayer->Team = $player->Team;
             $initData->Players[] = $initPlayer;
+            $displayedPlayersId[] = $player->Id;
         }
         Event::SendData($initData, "INIT");
         while (!connection_aborted()) {
+            $playersInGame = $this->playerStore->LoadWithFilter($playersFilter);
+            foreach ($playersInGame as $p) {
+                if (!in_array($p->Id, $displayedPlayersId)) {
+                    $displayedPlayersId[] = $p->Id;
+                    $initPlayer = new \stdClass();
+                    $initPlayer->Name = $p->Name;
+                    $dcUser = json_decode($this->apiHelper->GetWithBotAutherization("https://discord.com/api/v10/users/$p->DcId"));
+                    $avatar_url = $this->apiHelper->GetAvatarUrl($dcUser);
+                    $initPlayer->ImageUrl = $avatar_url;
+                    $initPlayer->IsHost = $p->IsHost;
+                    $initPlayer->Team = $p->Team;
+                    Event::SendData($initPlayer, "JOINED");
+                }
+            }
             Event::SendData("PING", "IGNORE");
-            sleep(1);
+            sleep(3);
         }
     }
 
@@ -187,13 +229,6 @@ class GameController
             return $games[0];
         }
         return null;
-    }
-
-
-    #[HttpGet(".*/eventsource")]
-    public function EventSource($gameId)
-    {
-
     }
 
     /**
