@@ -8,8 +8,8 @@
     <v-row>
       <v-col cols="6" md="3" style="text-align: center;">
         <h4>Team Blue<br><br></h4>
-        <div style="background-color: #4fcaff; border-radius: 12px" class="avatarContainer" >
-          <draggable :list="lobby.bluePlayers" :group="isHost == 1 ? 'players' : null">
+        <div style="background-color: #4fcaff; border-radius: 12px" class="avatarContainer">
+          <draggable :list="lobby.bluePlayers" :group="isHost == 1 ? 'players' : null" @change="teamChanged">
             <div v-for="player in lobby.bluePlayers">
               <h5>{{ player.Name }}</h5>
               <v-avatar size="80" class="userAvatar" :class="{ host: player.IsHost == 1 }">
@@ -86,7 +86,6 @@ export default {
             this.eventSource = new EventSource(url);
             this.eventSource.onmessage = (e) => {
               let data = JSON.parse(e.data);
-              console.log(e.data);
               if (data.Type == "INFO") {
                 console.log(e.data);
               }
@@ -116,11 +115,65 @@ export default {
                   this.canStart = true;
                 }
               }
+              if (data.Type == "TEAMCHANGE") {
+                let player;
+                this.lobby.bluePlayers.forEach(p => {
+                  if (p.Id == data.Content.Player) {
+                    player = p;
+                    this.lobby.bluePlayers.splice(this.lobby.bluePlayers.indexOf(p), 1)
+                  }
+                });
+                this.lobby.redPlayers.forEach(p => {
+                  if (p.Id == data.Content.Player) {
+                    player = p;
+                    this.lobby.redPlayers.splice(this.lobby.redPlayers.indexOf(p), 1)
+                  }
+                });
+                player.Team = data.Content.Team;
+                if (data.Content.Team == "blue") {
+                  this.lobby.bluePlayers.push(player);
+                } else {
+                  this.lobby.redPlayers.push(player);
+                }
+              }
               if (data.Type == "START") {
                 this.InitGame();
               }
             }
           });
+    },
+    teamChanged() {
+      let code = this.$router.currentRoute.params["id"]
+      let token = this.$store.state.user.token;
+      let newTeams = [];
+      this.lobby.bluePlayers.forEach(player => newTeams.push({
+        Id: player.Id,
+        Team: "blue"
+      }));
+      this.lobby.redPlayers.forEach(player => newTeams.push({
+        Id: player.Id,
+        Team: "red"
+      }));
+      console.log(newTeams);
+      fetch("https://api.tabubot.brainyxs.com/game/" + code + "/newTeams", {
+        headers: {
+          "Authorization": "Bearer " + token
+        },
+        method: "POST",
+        body: JSON.stringify(newTeams)
+      })
+          .then(data => data.json())
+          .then(data => {
+            if (data.Status == "OK") {
+              this.$store.state.snackbar.color = "green";
+            }
+            if (data.Status == "ERROR") {
+              this.$store.state.snackbar.color = "red";
+            }
+            this.$store.state.snackbar.message = data.Message;
+            this.$store.state.snackbar.timeout = 1000;
+            this.$store.state.snackbar.show = true;
+          })
     },
     Stop() {
       this.eventSource.close();
@@ -137,7 +190,7 @@ export default {
       })
           .then(data => data.json())
           .then(data => {
-            if (data.Status == "ok") {
+            if (data.Status == "OK") {
               this.$store.state.snackbar.color = "green";
             }
             if (data.Status == "ERROR") {

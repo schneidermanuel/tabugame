@@ -164,6 +164,32 @@ class GameController
 
     }
 
+    #[HttpPost("[a-zA-Z0-9]{4}/newTeams")]
+    public function SendTeams($gameCode)
+    {
+        list($game, $playerEntity) = $this->getPlayerGame($gameCode);
+        if (!$playerEntity->IsHost) {
+            Response::Send("Only the Host can start a Game", "ERROR");
+            die();
+        }
+        foreach ($_POST as $player) {
+            $entity = $this->playerStore->LoadById($player["Id"]);
+            $newTeam = $player["Team"];
+            $currentTeam = $entity->Team;
+            if ($newTeam != $currentTeam) {
+                $log = new GameActionEntity();
+                $log->GameId = $playerEntity->GameId;
+                $log->EventType = "TEAMCHANGE";
+                $log->AdditionalData = $newTeam;
+                $log->PlayerId = $player["Id"];
+                $this->logStore->SaveOrUpdate($log);
+                $entity->Team = $newTeam;
+                $this->playerStore->SaveOrUpdate($entity);
+            }
+        }
+        Response::Send("Teams updated");
+    }
+
     #[HttpGet("[a-zA-Z0-9]{4}/otp")]
     public function GenerateOtp($gameCode)
     {
@@ -190,6 +216,7 @@ class GameController
             $newPlayer->ImageUrl = $avatar_url;
             $newPlayer->IsHost = $player->IsHost;
             $newPlayer->Team = $player->Team;
+            $newPlayer->Id = $player->Id;
             $initData->Players[] = $newPlayer;
         }
         Event::SendData($initData, "INIT");
@@ -202,6 +229,7 @@ class GameController
                 if ($newLog->EventType == "JOIN") {
                     $player = $this->playerStore->LoadById($newLog->PlayerId);
                     $newPlayer = new \stdClass();
+                    $newPlayer->Id = $newLog->PlayerId;
                     $newPlayer->Name = $player->Name;
                     $dcUser = json_decode($this->apiHelper->GetWithBotAutherization("https://discord.com/api/v10/users/$player->DcId"));
                     $avatar_url = $this->apiHelper->GetAvatarUrl($dcUser);
@@ -209,6 +237,12 @@ class GameController
                     $newPlayer->IsHost = $player->IsHost;
                     $newPlayer->Team = $player->Team;
                     Event::SendData($newPlayer, "JOINED");
+                }
+                if ($newLog->EventType == "TEAMCHANGE") {
+                    $data = new \stdClass();
+                    $data->Player = $newLog->PlayerId;
+                    $data->Team = $newLog->AdditionalData;
+                    Event::SendData($data, "TEAMCHANGE");
                 }
 
             }
