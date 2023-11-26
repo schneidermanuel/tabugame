@@ -5,6 +5,7 @@ namespace tabubotapi\Core\Game;
 use Schneidermanuel\Dynalinker\Core\Dynalinker;
 use tabubotapi\Core\Authenticator;
 use tabubotapi\Core\Response;
+use tabubotapi\Entities\GameActionEntity;
 use tabubotapi\Entities\GameEntity;
 use tabubotapi\Entities\PlayerEntity;
 
@@ -13,12 +14,14 @@ class PlayerAdder
     private $dynalinker;
     private $playerStore;
     private $gameStore;
+    private $logStore;
 
     public function __construct()
     {
         $this->dynalinker = Dynalinker::Get();
         $this->playerStore = $this->dynalinker->CreateStore(PlayerEntity::class);
         $this->gameStore = $this->dynalinker->CreateStore(GameEntity::class);
+        $this->logStore = $this->dynalinker->CreateStore(GameActionEntity::class);
     }
 
     public function AddCurrentUserToGame($gameId)
@@ -62,7 +65,12 @@ class PlayerAdder
         $player->Team = $teamToJoin;
         $player->IsHost = $host;
 
-        $this->playerStore->SaveOrUpdate($player);
+        $id = $this->playerStore->SaveOrUpdate($player);
+        $log = new GameActionEntity();
+        $log->PlayerId = $id;
+        $log->EventType = "JOIN";
+        $log->GameId = $gameId;
+        $this->logStore->SaveOrUpdate($log);
     }
 
     private function GetTeamToJoin(int $bluePlayers, int $redPlayers): string

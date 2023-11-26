@@ -86,6 +86,7 @@ export default {
             this.eventSource = new EventSource(url);
             this.eventSource.onmessage = (e) => {
               let data = JSON.parse(e.data);
+              console.log(e.data);
               if (data.Type == "INFO") {
                 console.log(e.data);
               }
@@ -167,7 +168,7 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 50px;
+  min-height: 100px;
 }
 
 .host {

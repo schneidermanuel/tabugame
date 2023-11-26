@@ -11,6 +11,7 @@ use tabubotapi\Core\EventSource\Event;
 use tabubotapi\Core\Game\PlayerAdder;
 use tabubotapi\Core\Response;
 use tabubotapi\Entities\CardSetEntity;
+use tabubotapi\Entities\GameActionEntity;
 use tabubotapi\Entities\GameEntity;
 use tabubotapi\Entities\PlayerEntity;
 
@@ -21,6 +22,7 @@ class GameController
     private $cardSetStore;
     private $playerStore;
     private $apiHelper;
+    private $logStore;
 
     public function __construct()
     {
@@ -29,6 +31,7 @@ class GameController
         $this->cardSetStore = $this->dynalinker->CreateStore(CardSetEntity::class);
         $this->playerStore = $this->dynalinker->CreateStore(PlayerEntity::class);
         $this->apiHelper = new DiscordApiHelper();
+        $this->logStore = $this->dynalinker->CreateStore(GameActionEntity::class);
     }
 
     #[HttpPost("create")]
@@ -179,33 +182,35 @@ class GameController
         $initData = new \stdClass();
         $initData->Players = array();
         $initData->IsHost = $playerEntity->IsHost;
-        $displayedPlayersId = array();
         foreach ($players as $player) {
-            $initPlayer = new \stdClass();
-            $initPlayer->Name = $player->Name;
+            $newPlayer = new \stdClass();
+            $newPlayer->Name = $player->Name;
             $dcUser = json_decode($this->apiHelper->GetWithBotAutherization("https://discord.com/api/v10/users/$player->DcId"));
             $avatar_url = $this->apiHelper->GetAvatarUrl($dcUser);
-            $initPlayer->ImageUrl = $avatar_url;
-            $initPlayer->IsHost = $player->IsHost;
-            $initPlayer->Team = $player->Team;
-            $initData->Players[] = $initPlayer;
-            $displayedPlayersId[] = $player->Id;
+            $newPlayer->ImageUrl = $avatar_url;
+            $newPlayer->IsHost = $player->IsHost;
+            $newPlayer->Team = $player->Team;
+            $initData->Players[] = $newPlayer;
         }
         Event::SendData($initData, "INIT");
+        $maxLogId = $this->dynalinker->Query("SELECT MAX(gameActionLogId) as m FROM gameActionLog WHERE gameId = $playerEntity->GameId")[0]['m'];
         while (!connection_aborted()) {
-            $playersInGame = $this->playerStore->LoadWithFilter($playersFilter);
-            foreach ($playersInGame as $p) {
-                if (!in_array($p->Id, $displayedPlayersId)) {
-                    $displayedPlayersId[] = $p->Id;
-                    $initPlayer = new \stdClass();
-                    $initPlayer->Name = $p->Name;
-                    $dcUser = json_decode($this->apiHelper->GetWithBotAutherization("https://discord.com/api/v10/users/$p->DcId"));
+            $logQuery = "SELECT * FROM gameActionLog WHERE gameId = $playerEntity->GameId AND gameActionLogId > $maxLogId ORDER BY gameActionLogId";
+            $newLogs = $this->logStore->CustomQuery($logQuery);
+            foreach ($newLogs as $newLog) {
+                $maxLogId = $newLog->Id;
+                if ($newLog->EventType == "JOIN") {
+                    $player = $this->playerStore->LoadById($newLog->PlayerId);
+                    $newPlayer = new \stdClass();
+                    $newPlayer->Name = $player->Name;
+                    $dcUser = json_decode($this->apiHelper->GetWithBotAutherization("https://discord.com/api/v10/users/$player->DcId"));
                     $avatar_url = $this->apiHelper->GetAvatarUrl($dcUser);
-                    $initPlayer->ImageUrl = $avatar_url;
-                    $initPlayer->IsHost = $p->IsHost;
-                    $initPlayer->Team = $p->Team;
-                    Event::SendData($initPlayer, "JOINED");
+                    $newPlayer->ImageUrl = $avatar_url;
+                    $newPlayer->IsHost = $player->IsHost;
+                    $newPlayer->Team = $player->Team;
+                    Event::SendData($newPlayer, "JOINED");
                 }
+
             }
             Event::SendData("PING", "IGNORE");
             sleep(3);
