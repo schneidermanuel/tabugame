@@ -17,7 +17,9 @@ export default new Vuex.Store({
             username: null,
             pburl: null,
             token: null,
-        }
+        },
+        isLobby: false,
+        isGame: false
     },
     getters: {
     },

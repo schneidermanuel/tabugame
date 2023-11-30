@@ -5,7 +5,8 @@
     </v-row>
     <v-row>
       <v-col cols="12">
-        <GameLobby ref="lobby" v-if="state.isLobby"/>
+        <GameLobby ref="lobby" v-if="$store.state.isLobby"/>
+        <GameMain v-if="$store.state.isGame" />
       </v-col>
     </v-row>
   </v-container>
@@ -13,16 +14,13 @@
 
 <script>
 import GameLobby from "@/components/Game/GameLobby.vue";
+import GameMain from "@/components/Game/GameMain.vue";
 
 export default {
   name: "GameView",
-  components: {GameLobby},
+  components: {GameMain, GameLobby},
   data() {
     return {
-      state: {
-        isLobby: false,
-        isGame: false
-      },
       code: null
     }
   },
@@ -46,12 +44,11 @@ export default {
           .then(data => data.json())
           .then(data => {
             let state = data.State;
-            let players = data.Players;
             if (state == "OPEN") {
-              this.state.isLobby = true;
+              this.$store.state.isLobby = true;
             }
             if (state == "GAME") {
-              this.state.isGame = true;
+              this.$store.state.isGame = true;
             }
             this.$store.state.loading = false;
           });

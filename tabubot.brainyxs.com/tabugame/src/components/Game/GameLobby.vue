@@ -136,7 +136,8 @@ export default {
                   this.lobby.redPlayers.push(player);
                 }
               }
-              if (data.Type == "START") {
+              if (data.Type == "STARTGAME") {
+                this.Stop();
                 this.InitGame();
               }
             }
@@ -202,7 +203,6 @@ export default {
           });
     },
     InitGame() {
-
     }
   },
   async created() {

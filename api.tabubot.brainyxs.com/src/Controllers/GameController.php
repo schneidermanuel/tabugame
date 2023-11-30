@@ -91,6 +91,11 @@ class GameController
         }
         $game->State = 'GAME';
         $this->gameStore->SaveOrUpdate($game);
+        $log = new GameActionEntity();
+        $log->GameId = $game->Id;
+        $log->PlayerId = $playerEntity->Id;
+        $log->EventType = "STARTGAME";
+        $this->logStore->SaveOrUpdate($log);
         Response::Send("Game started");
     }
 
@@ -244,6 +249,11 @@ class GameController
                     $data->Team = $newLog->AdditionalData;
                     Event::SendData($data, "TEAMCHANGE");
                 }
+                if ($newLog->EventType == "STARTGAME")
+                {
+                    Event::SendData("LETS A GO", "STARTGAME");
+                }
+
 
             }
             Event::SendData("PING", "IGNORE");
