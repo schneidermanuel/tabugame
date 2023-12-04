@@ -3,6 +3,7 @@
 use Schneidermanuel\Dynalinker\Core\Dynalinker;
 use tabubotapi\Controllers\AuthenticationController;
 use tabubotapi\Controllers\CardsetController;
+use tabubotapi\Controllers\LobbyController;
 use tabubotapi\Controllers\GameController;
 use tabubotapi\Controllers\UserController;
 
@@ -27,5 +28,6 @@ $dynalinker = Dynalinker::Get();
 $dynalinker->AddController("auth", new AuthenticationController());
 $dynalinker->AddController("user", new UserController());
 $dynalinker->AddController("cardset", new CardsetController());
-$dynalinker->AddController("game", new GameController());
+$dynalinker->AddController("game", new LobbyController());
+$dynalinker->AddController("ingame", new GameController());
 $dynalinker->Run();
