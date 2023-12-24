@@ -8,6 +8,7 @@ use Schneidermanuel\Dynalinker\Core\Dynalinker;
 use tabubotapi\Core\Api\DiscordApiHelper;
 use tabubotapi\Core\Authenticator;
 use tabubotapi\Core\EventSource\Event;
+use tabubotapi\Core\Game\InitDataGenerator;
 use tabubotapi\Core\Game\PlayerAdder;
 use tabubotapi\Core\Response;
 use tabubotapi\Entities\CardSetEntity;
@@ -207,23 +208,7 @@ class LobbyController
     {
         Event::StartSource();
         $playerEntity = Authenticator::Redeem($otp);
-        $playersFilter = new PlayerEntity();
-        $playersFilter->GameId = $playerEntity->GameId;
-        $players = $this->playerStore->LoadWithFilter($playersFilter);
-        $initData = new \stdClass();
-        $initData->Players = array();
-        $initData->IsHost = $playerEntity->IsHost;
-        foreach ($players as $player) {
-            $newPlayer = new \stdClass();
-            $newPlayer->Name = $player->Name;
-            $dcUser = json_decode($this->apiHelper->GetWithBotAutherization("https://discord.com/api/v10/users/$player->DcId"));
-            $avatar_url = $this->apiHelper->GetAvatarUrl($dcUser);
-            $newPlayer->ImageUrl = $avatar_url;
-            $newPlayer->IsHost = $player->IsHost;
-            $newPlayer->Team = $player->Team;
-            $newPlayer->Id = $player->Id;
-            $initData->Players[] = $newPlayer;
-        }
+        $initData = (new InitDataGenerator())->GetInitData($playerEntity);
         Event::SendData($initData, "INIT");
         $maxLogId = $this->dynalinker->Query("SELECT MAX(gameActionLogId) as m FROM gameActionLog WHERE gameId = $playerEntity->GameId")[0]['m'];
         while (!connection_aborted()) {
@@ -243,14 +228,13 @@ class LobbyController
                     $newPlayer->Team = $player->Team;
                     Event::SendData($newPlayer, "JOINED");
                 }
-               if ($newLog->EventType == "TEAMCHANGE") {
+                if ($newLog->EventType == "TEAMCHANGE") {
                     $data = new \stdClass();
                     $data->Player = $newLog->PlayerId;
                     $data->Team = $newLog->AdditionalData;
                     Event::SendData($data, "TEAMCHANGE");
                 }
-                if ($newLog->EventType == "STARTGAME")
-                {
+                if ($newLog->EventType == "STARTGAME") {
                     Event::SendData("LETS A GO", "STARTGAME");
                 }
 

@@ -6,7 +6,7 @@
     <v-row>
       <v-col cols="12">
         <GameLobby ref="lobby" v-if="$store.state.isLobby"/>
-        <GameMain v-if="$store.state.isGame" />
+        <GameMain ref="game" v-if="$store.state.isGame" />
       </v-col>
     </v-row>
   </v-container>
@@ -59,8 +59,11 @@ export default {
   },
   beforeRouteLeave(to, from, next) {
     if (this.$refs.lobby) {
-
       this.$refs.lobby.Stop();
+    }
+    if (this.$refs.game)
+    {
+      this.$refs.game.Stop();
     }
     next();
   }
