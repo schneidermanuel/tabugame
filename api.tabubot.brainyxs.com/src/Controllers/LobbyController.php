@@ -86,10 +86,10 @@ class LobbyController
         $bluePlayersFilter->GameId = $game->Id;
         $bluePlayersFilter->Team = "blue";
         $bluePlayers = $this->playerStore->LoadWithFilter($bluePlayersFilter);
-        if (count($bluePlayers) <= 1 || count($redPlayers) <= 1) {
-            Response::Send("Both Teams need at least 2 players", "ERROR");
-            die();
-        }
+//        if (count($bluePlayers) <= 1 || count($redPlayers) <= 1) {
+//            Response::Send("Both Teams need at least 2 players", "ERROR");
+//            die();
+//        }
         $game->State = 'GAME';
         $this->gameStore->SaveOrUpdate($game);
         $log = new GameActionEntity();
@@ -97,6 +97,18 @@ class LobbyController
         $log->PlayerId = $playerEntity->Id;
         $log->EventType = "STARTGAME";
         $this->logStore->SaveOrUpdate($log);
+
+        $firstPlayerFilter = new PlayerEntity();
+        $firstPlayerFilter->GameId = $game->Id;
+        $firstPlayerFilter->Team = "blue";
+        $firstPlayerList = $this->playerStore->LoadWithFilter($firstPlayerFilter);
+        $firstPlayer = $firstPlayerList[0];
+        $turnLog = new GameActionEntity();
+        $turnLog->EventType = "TURNSTART";
+        $turnLog->GameId = $game->Id;
+        $turnLog->PlayerId = $firstPlayer->Id;
+        $this->logStore->SaveOrUpdate($turnLog);
+
         Response::Send("Game started");
     }
 

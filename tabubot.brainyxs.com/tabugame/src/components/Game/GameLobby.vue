@@ -6,7 +6,7 @@
       <v-spacer/>
     </v-row>
     <v-row>
-      <v-col cols="6" md="3" style="text-align: center;">
+      <v-col md="3" cols="6" style="text-align: center;">
         <h4>Team Blue<br><br></h4>
         <div style="background-color: #4fcaff; border-radius: 12px" class="avatarContainer">
           <draggable :list="lobby.bluePlayers" :group="isHost == 1 ? 'players' : null" @change="teamChanged">
@@ -20,7 +20,7 @@
         </div>
       </v-col>
       <v-spacer></v-spacer>
-      <v-col cols="6" md="3" style="text-align: center">
+      <v-col md="3" cols="6" style="text-align: center">
         <h4>Team Red<br><br></h4>
         <div style="background-color: #ff3f41; border-radius: 12px" class="avatarContainer">
           <draggable :list="lobby.redPlayers" :group="isHost == 1 ? 'players' : null">
@@ -49,7 +49,6 @@
     </v-row>
   </v-container>
 </template>
-
 <script>
 
 import draggable from "vuedraggable";
@@ -155,7 +154,6 @@ export default {
         Id: player.Id,
         Team: "red"
       }));
-      console.log(newTeams);
       fetch("https://api.tabubot.brainyxs.com/game/" + code + "/newTeams", {
         headers: {
           "Authorization": "Bearer " + token
@@ -182,7 +180,6 @@ export default {
     startGame() {
       let code = this.$router.currentRoute.params["id"]
       let token = this.$store.state.user.token;
-      console.log(token);
       fetch("https://api.tabubot.brainyxs.com/game/" + code + "/start", {
         headers: {
           "Authorization": "Bearer " + token
@@ -203,6 +200,8 @@ export default {
           });
     },
     InitGame() {
+      this.$store.state.isGame = true;
+      this.$store.state.isLobby = false;
     }
   },
   async created() {
@@ -222,6 +221,7 @@ export default {
   flex-direction: column;
   align-items: center;
   min-height: 100px;
+  min-width: 20%;
 }
 
 .host {
