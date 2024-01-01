@@ -178,6 +178,7 @@ export default {
       this.eventSource.close();
     },
     startGame() {
+      this.$store.state.loading = true;
       let code = this.$router.currentRoute.params["id"]
       let token = this.$store.state.user.token;
       fetch("https://api.tabubot.brainyxs.com/game/" + code + "/start", {

@@ -73,8 +73,7 @@ export default {
       },
       Timer: {
         IsActive: false,
-        Minutes: 2,
-        Seconds: 0,
+        InitialTimestamp: null,
         Display: "2:00"
       }
     }
@@ -102,6 +101,7 @@ export default {
               if (data.Type == "INIT") {
                 this.Players = data.Content.Players;
                 this.isHost = data.Content.IsHost;
+                this.isMyTurn = data.Content.IsMyTurn;
                 this.Players.forEach(player => {
                   if (player.Team == "blue") {
                     this.bluePlayers.push(player);
@@ -109,6 +109,17 @@ export default {
                     this.redPlayers.push(player);
                   }
                 });
+                if (data.Content.Timestamp) {
+                  this.StartTimer(data.Content.Timestamp);
+                }
+                if (data.Content.Card) {
+                  this.Card.Visible = this.isMyTurn && this.Timer.IsActive;
+                  this.Card.Title = data.Content.Card.CardWord;
+                  this.Card.Word1 = data.Content.Card.Word1;
+                  this.Card.Word2 = data.Content.Card.Word2;
+                  this.Card.Word3 = data.Content.Card.Word3;
+                  this.Card.Word4 = data.Content.Card.Word4;
+                }
                 if (this.bluePlayers.length > 0 && this.redPlayers.length > 0) {
                   this.canStart = true;
                 }
@@ -120,27 +131,80 @@ export default {
                 this.currentPlayername = player.Name;
                 this.isMyTurn = data.Content.IsMyTurn;
               }
+              if (data.Type == "TIMERSTART") {
+                let timestamp = data.Content.Timestamp;
+                this.StartTimer(timestamp);
+              }
+              if (data.Type == "CARDDISPLAY") {
+                this.Card.Visible = this.isMyTurn && this.Timer.IsActive;
+                this.Card.Title = data.Content.CardWord;
+                this.Card.Word1 = data.Content.Word1;
+                this.Card.Word2 = data.Content.Word2;
+                this.Card.Word3 = data.Content.Word3;
+                this.Card.Word4 = data.Content.Word4;
+              }
             }
           });
     },
     startTurnCommand() {
-      window.setInterval(() => {
-        if (this.Timer.Seconds > 0) {
-          this.Timer.Seconds--;
-        } else {
-          this.Timer.Seconds = 59;
-          this.Timer.Minutes--;
+      let code = this.$router.currentRoute.params["id"];
+      let token = this.$store.state.user.token;
+      fetch("https://api.tabubot.brainyxs.com/ingame/" + code + "/startturn", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + token
         }
-        this.Timer.Display = this.Timer.Minutes + ":" + this.Timer.Seconds.toLocaleString(undefined, {minimumIntegerDigits: 2});
-      }, 1000)
+      })
+          .then(data => data.json())
+          .then(data => {
+            if (data.Status == "ERROR") {
+              this.$store.state.snackbar.color = "red";
+            }
+            this.$store.state.snackbar.message = data.Message;
+            this.$store.state.snackbar.timeout = 1000;
+            this.$store.state.snackbar.show = true;
+          });
+
+    },
+    StartTimer(timestamp) {
+      this.isInTurn = true;
+      this.Timer.IsActive = true;
+      this.Timer.InitialTimestamp = timestamp;
+      let ellapsed = (Date.now() - new Date(this.Timer.InitialTimestamp * 1000)) / 1000;
+      if (ellapsed > 2 * 60) {
+        this.Timer.IsActive = false;
+      }
+      console.log("Start sä timer")
+      this.Tick();
+    },
+    Tick() {
+      let ellapsed = (Date.now() - new Date(this.Timer.InitialTimestamp * 1000)) / 1000;
+      if (ellapsed > 2 * 60) {
+        this.Timer.IsActive = false;
+      }
+      if (this.Timer.IsActive) {
+        let minutesEllapsed = Math.floor(ellapsed / 60);
+        let secondsEllapsed = Math.floor(ellapsed % 60);
+        let minutesDisplay = (1 - minutesEllapsed).toLocaleString("de-CH", {
+          minimumIntegerDigits: 1
+        });
+        let secondsDisplay = (60 - secondsEllapsed).toLocaleString("de-CH", {
+          minimumIntegerDigits: 2
+        });
+        this.Timer.Display = minutesDisplay + ":" + secondsDisplay;
+        window.setTimeout(() => this.Tick(), 1000);
+      }
+    },
+
+    Stop() {
+      this.eventSource.close();
     }
-  },
+  }
+  ,
   async created() {
     this.Init();
-  },
-  Stop() {
-    this.eventSource.close();
-  },
+  }
+  ,
 }
 
 </script>
@@ -152,6 +216,7 @@ export default {
   width: 100%;
   justify-content: center;
   flex-direction: column;
+  align-items: center;
 }
 
 .card {

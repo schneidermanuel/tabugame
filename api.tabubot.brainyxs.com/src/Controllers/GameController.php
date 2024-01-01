@@ -3,21 +3,31 @@
 namespace tabubotapi\Controllers;
 
 use Schneidermanuel\Dynalinker\Controller\HttpGet;
+use Schneidermanuel\Dynalinker\Controller\HttpPost;
 use Schneidermanuel\Dynalinker\Core\Dynalinker;
 use tabubotapi\Core\Authenticator;
 use tabubotapi\Core\EventSource\Event;
 use tabubotapi\Core\Game\InitDataGenerator;
+use tabubotapi\Core\Response;
+use tabubotapi\Entities\CardEntity;
 use tabubotapi\Entities\GameActionEntity;
+use tabubotapi\Entities\GameEntity;
 use tabubotapi\Entities\PlayerEntity;
 
 class GameController
 {
     private $logStore;
+    private $cardStore;
+    private $gameStore;
+    private $playerStore;
 
     public function __construct()
     {
         $dynalinker = Dynalinker::Get();
         $this->logStore = $dynalinker->CreateStore(GameActionEntity::class);
+        $this->cardStore = $dynalinker->CreateStore(CardEntity::class);
+        $this->gameStore = $dynalinker->CreateStore(GameEntity::class);
+        $this->playerStore = $dynalinker->CreateStore(PlayerEntity::class);
     }
 
     #[HttpGet("[a-zA-Z0-9]{4}/events/.*")]
@@ -26,16 +36,162 @@ class GameController
         Event::StartSource();
         $playerEntity = Authenticator::Redeem($otp);
         $initData = (new InitDataGenerator())->GetInitData($playerEntity);
+        $maxTimerstarts = $this->logStore->CustomQuery("SELECT * FROM gameActionLog WHERE type = 'TIMERSTART' AND gameId = $playerEntity->GameId ORDER BY gameActionLogId DESC LIMIT 1");
+        if (count($maxTimerstarts) > 0) {
+            $initData->Timestamp = $maxTimerstarts[0]->AdditionalData;
+        }
+        $maxTurnstart = $this->logStore->CustomQuery("SELECT * FROM gameActionLog WHERE type = 'TURNSTART' AND gameId = $playerEntity->GameId ORDER BY gameActionLogId DESC LIMIT 1");
+        $initData->IsMyTurn = $maxTurnstart[0]->PlayerId == $playerEntity->Id;
+        $maxCardDisplay = $this->logStore->CustomQuery("SELECT * FROM gameActionLog WHERE type = 'CARDDISPLAY' AND gameId = $playerEntity->GameId ORDER BY gameActionLogId DESC LIMIT 1");
+        if (count($maxCardDisplay) > 0) {
+            $cardDisplay = new \stdClass();
+            $cardEntity = $this->cardStore->LoadById($maxCardDisplay[0]->AdditionalData);
+            $cardDisplay->CardWord = $cardEntity->Text;
+            $cardDisplay->Word1 = $cardEntity->Keyword1;
+            $cardDisplay->Word2 = $cardEntity->Keyword2;
+            $cardDisplay->Word3 = $cardEntity->Keyword3;
+            $cardDisplay->Word4 = $cardEntity->Keyword4;
+            $initData->Card = $cardDisplay;
+        }
         Event::SendData($initData, "INIT");
         $maxTurnstart = $this->logStore->CustomQuery("SELECT * FROM gameActionLog WHERE type = 'TURNSTART' AND gameId = $playerEntity->GameId ORDER BY gameActionLogId DESC LIMIT 1")[0];
         $turnstart = new \stdClass();
         $turnstart->PlayerId = $maxTurnstart->PlayerId;
         $turnstart->IsMyTurn = $maxTurnstart->PlayerId == $playerEntity->Id;
         Event::SendData($turnstart, "TURNSTART");
+        $maxLog = $this->logStore->CustomQuery("SELECT * FROM gameActionLog WHERE gameId = $playerEntity->GameId ORDER BY gameActionLogId DESC LIMIT 1")[0];
+        $maxLogId = $maxLog->Id;
         while (!connection_aborted()) {
+            $logQuery = "SELECT * FROM gameActionLog WHERE gameId = $playerEntity->GameId AND gameActionLogId > $maxLogId ORDER BY gameActionLogId";
+            $newLogs = $this->logStore->CustomQuery($logQuery);
+            foreach ($newLogs as $newLog) {
+                $maxLogId = $newLog->Id;
+                if ($newLog->EventType == "TURNSTART") {
+                    $turnstart = new \stdClass();
+                    $turnstart->PlayerId = $newLog->PlayerId;
+                    $turnstart->IsMyTurn = $newLog->PlayerId == $playerEntity->Id;
+                    Event::SendData($turnstart, "TURNSTART");
+                }
+                if ($newLog->EventType == "TIMERSTART") {
+                    $timerStart = new \stdClass();
+                    $timerStart->Timestamp = $newLog->AdditionalData;
+                    Event::SendData($timerStart, "TIMERSTART");
+                }
+                if ($newLog->EventType == "CARDDISPLAY") {
+                    $cardDisplay = new \stdClass();
+                    $cardEntity = $this->cardStore->LoadById($newLog->AdditionalData);
+                    $cardDisplay->CardWord = $cardEntity->Text;
+                    $cardDisplay->Word1 = $cardEntity->Keyword1;
+                    $cardDisplay->Word2 = $cardEntity->Keyword2;
+                    $cardDisplay->Word3 = $cardEntity->Keyword3;
+                    $cardDisplay->Word4 = $cardEntity->Keyword4;
+                    Event::SendData($cardDisplay, "CARDDISPLAY");
+                }
+
+            }
             Event::SendData("PING", "IGNORE");
             sleep(3);
         }
+    }
+
+    #[HttpPost("[a-zA-Z0-9]{4}/startturn")]
+    public function StartTurn($code)
+    {
+        list($game, $player) = $this->getPlayerGame($code);
+        $maxTurnstart = $this->logStore->CustomQuery("SELECT * FROM gameActionLog WHERE type = 'TURNSTART' AND gameId = $player->GameId ORDER BY gameActionLogId DESC LIMIT 1")[0];
+        $isMyTurn = $maxTurnstart->PlayerId == $player->Id;
+        if (!$isMyTurn) {
+            Response::Send("It's not your turn", "ERROR");
+            return;
+        }
+        $newerTimerStarts = $this->logStore->CustomQuery("SELECT * FROM gameActionLog WHERE type = 'TIMERSTART' and gameId = $player->Id AND gameActionLogId > $maxTurnstart->Id");
+        if (count($newerTimerStarts) > 0) {
+            Response::Send("Turn already started", "ERROR");
+        }
+        $card = $this->GetANewCardForTeam($player);
+        $timestamp = time();
+        $startTurnLog = new GameActionEntity();
+        $startTurnLog->PlayerId = $player->Id;
+        $startTurnLog->GameId = $game->Id;
+        $startTurnLog->AdditionalData = $timestamp;
+        $startTurnLog->EventType = "TIMERSTART";
+        $this->logStore->SaveOrUpdate($startTurnLog);
+        $cardDisplayLog = new GameActionEntity();
+        $cardDisplayLog->GameId = $game->Id;
+        $cardDisplayLog->PlayerId = $player->Id;
+        $cardDisplayLog->EventType = "CARDDISPLAY";
+        $cardDisplayLog->AdditionalData = $card->Id;
+        $this->logStore->SaveOrUpdate($cardDisplayLog);
+        Response::Send("turn started");
+    }
+
+    private function GetANewCardForTeam($playerEntity)
+    {
+        $gameId = $playerEntity->GameId;
+        $game = $this->gameStore->LoadById($gameId);
+
+        $cardList = $this->cardStore->CustomQuery("SELECT c.*
+FROM card c
+WHERE c.cardSetId = $game->cardSetId
+  AND c.cardId NOT IN (SELECT gal.additionalData
+                       FROM gameActionLog gal
+                                JOIN player pl ON gal.relevantPlayer = pl.playerId
+                       WHERE gal.type = 'CARDDISPLAY'
+                         AND pl.team = '$playerEntity->Team'
+                         AND pl.gameId = $playerEntity->GameId)
+ORDER BY rand()
+LIMIT 1");
+
+        if (count($cardList) == 0) {
+            return null;
+        }
+
+        return $cardList[0];
+    }
+
+    public function getPlayerGame($gameCode)
+    {
+        if (!Authenticator::IsAuthenticated()) {
+            http_response_code(401);
+            die();
+        }
+        $user = Authenticator::GetUser();
+        $game = $this->GetGameByCode($gameCode);
+        if ($game == null) {
+            http_response_code(400);
+            die();
+        }
+        $userId = $user->sub;
+        $gameId = $game->Id;
+        $playerFilter = new PlayerEntity();
+        $playerFilter->GameId = $gameId;
+        $playerFilter->DcId = $userId;
+        $playerEntities = $this->playerStore->LoadWithFilter($playerFilter);
+        if (count($playerEntities) != 1) {
+            http_response_code(400);
+            die();
+        }
+        $playerEntity = $playerEntities[0];
+        return array($game, $playerEntity);
+    }
+
+    private function GetGameByCode($gameCode)
+    {
+        $gameFilter = new GameEntity();
+        $gameFilter->Code = $gameCode;
+        $gameFilter->State = 'OPEN';
+        $games = $this->gameStore->LoadWithFilter($gameFilter);
+        if (count($games) == 1) {
+            return $games[0];
+        }
+        $gameFilter = new GameEntity();
+        $gameFilter->Code = $gameCode;
+        $gameFilter->State = 'GAME';
+        $games = $this->gameStore->LoadWithFilter($gameFilter);
+        if (count($games) == 1) {
+            return $games[0];
+        }
+        return null;
     }
 
 }
