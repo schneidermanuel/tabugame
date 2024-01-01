@@ -30,6 +30,76 @@ class GameController
         $this->playerStore = $dynalinker->CreateStore(PlayerEntity::class);
     }
 
+    #[HttpPost("[a-zA-Z0-9]{4}/stopTurn")]
+    public function CompleteTimer($code)
+    {
+        if (!Authenticator::IsAuthenticated()) {
+            Response::Send("User is not logged in", "ERROR");
+        }
+        list($game, $player) = $this->getPlayerGame($code);
+        $timerStartFilter = new GameActionEntity();
+        $timerStartFilter->GameId = $game->Id;
+        $timerStartFilter->AdditionalData = $_POST["TimerTimestamp"];
+        $timerStartFilter->EventType = "TIMERSTART";
+        $timerStartQuery = $this->logStore->LoadWithFilter($timerStartFilter);
+        if (count($timerStartQuery) < 1) {
+            Response::Send("Invalid State", "ERROR");
+        }
+        $timerStartEntity = $timerStartQuery[0];
+
+        $timerEndFilter = new GameActionEntity();
+        $timerEndFilter->GameId = $game->Id;
+        $timerEndFilter->AdditionalData = $timerStartEntity->Id;
+        $timerEndFilter->EventType = "TIMEREND";
+        $timerEndQuery = $this->logStore->LoadWithFilter($timerEndFilter);
+        if (count($timerEndQuery) > 0) {
+            die();
+        }
+
+        $timerEndEntity = new GameActionEntity();
+        $timerEndEntity->AdditionalData = $timerStartEntity->Id;
+        $timerEndEntity->GameId = $game->Id;
+        $timerEndEntity->EventType = "TIMEREND";
+        $timerEndEntity->PlayerId = $timerStartEntity->PlayerId;
+        $this->logStore->SaveOrUpdate($timerEndEntity);
+
+
+    }
+
+    private function SetNewPlayerActive($gameEntity)
+    {
+        $maxTurnstart = $this->logStore->CustomQuery("SELECT * FROM gameActionLog WHERE type = 'TURNSTART' AND gameId = $gameEntity->Id ORDER BY gameActionLogId DESC LIMIT 1")[0];
+        $currentPlayerEntity = $this->playerStore->LoadById($maxTurnstart->PlayerId);
+        $currentTeam = $currentPlayerEntity->Team;
+        $nextTeam = "blue";
+        if ($currentTeam == "blue") {
+            $nextTeam = "red";
+        }
+
+        $nextPlayerQuery = $this->playerStore->CustomQuery(
+            "SELECT *
+FROM player
+where playerId IN
+      (SELECT p.playerId
+       FROM player p
+                LEFT JOIN gameActionLog turnstart
+                          ON p.playerId = turnstart.relevantPlayer
+                              AND turnstart.type = 'TURNSTART'
+       WHERE p.gameId = $gameEntity->Id
+         AND team = '$nextTeam'
+       GROUP BY p.playerId
+       ORDER BY MAX(turnstart.gameActionLogId))
+LIMIT 1;"
+        );
+        $nextPlayer = $nextPlayerQuery[0];
+        $turnLog = new GameActionEntity();
+        $turnLog->EventType = "TURNSTART";
+        $turnLog->GameId = $gameEntity->Id;
+        $turnLog->PlayerId = $nextPlayer->Id;
+        $this->logStore->SaveOrUpdate($turnLog);
+    }
+
+
     #[HttpGet("[a-zA-Z0-9]{4}/events/.*")]
     public function MainEventStream($code, $otp)
     {

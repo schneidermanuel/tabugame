@@ -37,6 +37,16 @@
             <font-awesome-icon icon="play"/>
             Start!
           </v-btn>
+          <div v-if="isMyTurn && isInTurn">
+            <v-btn color="red">
+              <font-awesome-icon icon="trash"/>
+              Skip card
+            </v-btn>
+            <v-btn color="green">
+              <font-awesome-icon icon="check"/>
+              Correct!
+            </v-btn>
+          </div>
         </div>
       </v-col>
       <v-col cols="2">
@@ -181,6 +191,7 @@ export default {
       let ellapsed = (Date.now() - new Date(this.Timer.InitialTimestamp * 1000)) / 1000;
       if (ellapsed > 2 * 60) {
         this.Timer.IsActive = false;
+        this.CompleteTimer();
       }
       if (this.Timer.IsActive) {
         let minutesEllapsed = Math.floor(ellapsed / 60);
@@ -195,7 +206,23 @@ export default {
         window.setTimeout(() => this.Tick(), 1000);
       }
     },
+    CompleteTimer() {
+      let code = this.$router.currentRoute.params["id"];
+      let token = this.$store.state.user.token;
+      fetch("https://api.tabubot.brainyxs.com/ingame/" + code + "/stopTurn", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+          "TimerTimestamp": this.Timer.InitialTimestamp
+        })
+      })
+          .then(data => data.json())
+          .then(data => {
 
+          });
+    },
     Stop() {
       this.eventSource.close();
     }

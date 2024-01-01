@@ -13,10 +13,12 @@ import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome'
 
 /* import specific icons */
 import {faDiscord} from '@fortawesome/free-brands-svg-icons'
-import {faPlay} from "@fortawesome/free-solid-svg-icons";
+import {faPlay, faCheck, faTrash} from "@fortawesome/free-solid-svg-icons";
 
-library.add(faDiscord)
-library.add(faPlay)
+library.add(faDiscord);
+library.add(faPlay);
+library.add(faCheck);
+library.add(faTrash);
 
 /* add font awesome icon component */
 Vue.component('font-awesome-icon', FontAwesomeIcon)
