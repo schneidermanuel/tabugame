@@ -86,7 +86,7 @@ class LobbyController
         $bluePlayersFilter->GameId = $game->Id;
         $bluePlayersFilter->Team = "blue";
         $bluePlayers = $this->playerStore->LoadWithFilter($bluePlayersFilter);
-        if (count($bluePlayers) <= 1 || count($redPlayers) <= 1) {
+        if (count($bluePlayers) < 1 || count($redPlayers) < 1) {
             Response::Send("Both Teams need at least 2 players", "ERROR");
         }
         $game->State = 'GAME';

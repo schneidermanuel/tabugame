@@ -133,6 +133,12 @@ LIMIT 1;"
         Event::SendData($turnstart, "TURNSTART");
         $maxLog = $this->logStore->CustomQuery("SELECT * FROM gameActionLog WHERE gameId = $playerEntity->GameId ORDER BY gameActionLogId DESC LIMIT 1")[0];
         $maxLogId = $maxLog->Id;
+        $blueScore = $this->GetTeamScore($playerEntity->GameId, 'blue');
+        $redScore = $this->GetTeamScore($playerEntity->GameId, 'red');
+        $newScores = new \stdClass();
+        $newScores->Blue = $blueScore;
+        $newScores->Red = $redScore;
+        Event::SendData($newScores, "SCORES");
         while (!connection_aborted()) {
             $logQuery = "SELECT * FROM gameActionLog WHERE gameId = $playerEntity->GameId AND gameActionLogId > $maxLogId ORDER BY gameActionLogId";
             $newLogs = $this->logStore->CustomQuery($logQuery);
@@ -159,11 +165,104 @@ LIMIT 1;"
                     $cardDisplay->Word4 = $cardEntity->Keyword4;
                     Event::SendData($cardDisplay, "CARDDISPLAY");
                 }
+                if ($newLog->EventType == "CARDACK") {
+                    $blueScore = $this->GetTeamScore($playerEntity->GameId, 'blue');
+                    $redScore = $this->GetTeamScore($playerEntity->GameId, 'red');
+                    $newScores = new \stdClass();
+                    $newScores->Blue = $blueScore;
+                    $newScores->Red = $redScore;
+                    Event::SendData($newScores, "SCORES");
+                }
 
             }
             Event::SendData("PING", "IGNORE");
-            sleep(3);
+            sleep(1);
         }
+    }
+
+    private function GetTeamScore($gameId, $team)
+    {
+        $filter = new GameActionEntity();
+        $filter->GameId = $gameId;
+        $filter->AdditionalData = $team;
+        $filter->EventType = "CARDACK";
+        $query = $this->logStore->LoadWithFilter($filter);
+        return count($query);
+    }
+
+    #[HttpPost("[a-zA-Z0-9]{4}/cardSkip")]
+    public function CardSkip($code)
+    {
+        list($game, $player) = $this->getPlayerGame($code);
+        $maxTurnstart = $this->logStore->CustomQuery("SELECT * FROM gameActionLog WHERE type = 'TURNSTART' AND gameId = $player->GameId ORDER BY gameActionLogId DESC LIMIT 1")[0];
+        if ($maxTurnstart->PlayerId != $player->Id) {
+            Response::Send("It's not your turn", "ERROR");
+        }
+        $newerTimerStarts = $this->logStore->CustomQuery("SELECT * FROM gameActionLog WHERE type = 'TIMERSTART' and gameId = $player->GameId AND gameActionLogId > $maxTurnstart->Id");
+        if (count($newerTimerStarts) < 1) {
+            Response::Send("The turn did not start correctly", "ERROR");
+        }
+        $newTimerStartId = $newerTimerStarts[0]->Id;
+        $timerCompleteQuery = $this->logStore->CustomQuery("SELECT * FROM gameActionLog WHERE type = 'TIMEREND' and additionalData = $newTimerStartId");
+        if (count($timerCompleteQuery) > 0) {
+            Response::Send("The turn is already completed", "ERROR");
+        }
+        $pointLog = new GameActionEntity();
+        $pointLog->PlayerId = $player->Id;
+        $pointLog->GameId = $game->Id;
+        $pointLog->EventType = "CARDSKIP";
+        $pointLog->AdditionalData = $player->Team;
+        $this->logStore->SaveOrUpdate($pointLog);
+
+        $card = $this->GetANewCardForTeam($player);
+        if (isset($card)) {
+            $cardDisplayLog = new GameActionEntity();
+            $cardDisplayLog->GameId = $game->Id;
+            $cardDisplayLog->PlayerId = $player->Id;
+            $cardDisplayLog->EventType = "CARDDISPLAY";
+            $cardDisplayLog->AdditionalData = $card->Id;
+            $this->logStore->SaveOrUpdate($cardDisplayLog);
+        }
+
+        Response::Send("Card skipped!", "WARNING");
+    }
+
+    #[HttpPost("[a-zA-Z0-9]{4}/cardCorrect")]
+    public function CardCorrect($code)
+    {
+        list($game, $player) = $this->getPlayerGame($code);
+        $maxTurnstart = $this->logStore->CustomQuery("SELECT * FROM gameActionLog WHERE type = 'TURNSTART' AND gameId = $player->GameId ORDER BY gameActionLogId DESC LIMIT 1")[0];
+        if ($maxTurnstart->PlayerId != $player->Id) {
+            Response::Send("It's not your turn", "ERROR");
+        }
+        $newerTimerStarts = $this->logStore->CustomQuery("SELECT * FROM gameActionLog WHERE type = 'TIMERSTART' and gameId = $player->GameId AND gameActionLogId > $maxTurnstart->Id");
+        if (count($newerTimerStarts) < 1) {
+            Response::Send("The turn did not start correctly", "ERROR");
+        }
+        $newTimerStartId = $newerTimerStarts[0]->Id;
+        $timerCompleteQuery = $this->logStore->CustomQuery("SELECT * FROM gameActionLog WHERE type = 'TIMEREND' and additionalData = $newTimerStartId");
+        if (count($timerCompleteQuery) > 0) {
+            Response::Send("The turn is already completed", "ERROR");
+        }
+        $pointLog = new GameActionEntity();
+        $pointLog->PlayerId = $player->Id;
+        $pointLog->GameId = $game->Id;
+        $pointLog->EventType = "CARDACK";
+        $pointLog->AdditionalData = $player->Team;
+        $this->logStore->SaveOrUpdate($pointLog);
+
+        $card = $this->GetANewCardForTeam($player);
+        if (isset($card)) {
+            $cardDisplayLog = new GameActionEntity();
+            $cardDisplayLog->GameId = $game->Id;
+            $cardDisplayLog->PlayerId = $player->Id;
+            $cardDisplayLog->EventType = "CARDDISPLAY";
+            $cardDisplayLog->AdditionalData = $card->Id;
+            $this->logStore->SaveOrUpdate($cardDisplayLog);
+        }
+
+        Response::Send("Card completed!");
+
     }
 
     #[HttpPost("[a-zA-Z0-9]{4}/startturn")]

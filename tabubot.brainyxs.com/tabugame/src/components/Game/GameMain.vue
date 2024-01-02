@@ -1,15 +1,15 @@
 <template>
   <v-container style="font-family: Agbalumo; color: white; font-size: 120%">
     <v-row>
-      <v-col cols="2">
-        Blue: 0 Points
+      <v-col cols="2" class="text-center">
+        Blue: {{ Score.Blue }} Points
       </v-col>
       <v-col cols="8" class="text-center">
         <div class="uname">{{ currentPlayername }}</div>
         's Turn
       </v-col>
-      <v-col cols="2">
-        Red: 0 Points
+      <v-col cols="2" class="text-center">
+        Red: {{ Score.Red }} Points
       </v-col>
     </v-row>
     <v-row>
@@ -39,11 +39,11 @@
             Start!
           </v-btn>
           <div v-if="isMyTurn && Timer.IsActive">
-            <v-btn color="red">
+            <v-btn color="red" v-on:click="SkipCard">
               <font-awesome-icon icon="trash"/>
               Skip card
             </v-btn>
-            <v-btn color="green">
+            <v-btn color="green" v-on:click="CardCorrect">
               <font-awesome-icon icon="check"/>
               Correct!
             </v-btn>
@@ -85,6 +85,10 @@ export default {
         IsActive: false,
         InitialTimestamp: null,
         Display: "2:00"
+      },
+      Score: {
+        Blue: '?',
+        Red: '?'
       }
     }
   },
@@ -136,6 +140,7 @@ export default {
                 this.$store.state.loading = false;
               }
               if (data.Type == "TURNSTART") {
+                this.Card.Visible = false;
                 let playerId = data.Content.PlayerId;
                 let player = this.Players.filter(p => p.Id == playerId)[0];
                 this.currentPlayername = player.Name;
@@ -152,6 +157,10 @@ export default {
                 this.Card.Word2 = data.Content.Word2;
                 this.Card.Word3 = data.Content.Word3;
                 this.Card.Word4 = data.Content.Word4;
+              }
+              if (data.Type == "SCORES") {
+                this.Score.Blue = data.Content.Blue;
+                this.Score.Red = data.Content.Red;
               }
             }
           });
@@ -183,6 +192,8 @@ export default {
       if (ellapsed > 2 * 60) {
         this.Timer.IsActive = false;
         this.isMyTurn = false;
+        this.Card.Visible = false;
+        this.Timer.Display = "2:00";
       }
       this.Tick();
     },
@@ -226,6 +237,55 @@ export default {
               this.$store.state.snackbar.show = true;
             }
           });
+    },
+    CardCorrect() {
+      this.Card.Visible = false;
+      let code = this.$router.currentRoute.params["id"];
+      let token = this.$store.state.user.token;
+      fetch("https://api.tabubot.brainyxs.com/ingame/" + code + "/cardCorrect", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      })
+          .then(data => data.json())
+          .then(data => {
+            this.$store.state.snackbar.color = "green";
+            if (data.Status == "WARNING") {
+              this.$store.state.snackbar.color = "orange";
+            }
+            if (data.Status == "ERROR") {
+              this.$store.state.snackbar.color = "red";
+            }
+            this.$store.state.snackbar.message = data.Message;
+            this.$store.state.snackbar.timeout = 1000;
+            this.$store.state.snackbar.show = true;
+          })
+    },
+    SkipCard() {
+
+      this.Card.Visible = false;
+      let code = this.$router.currentRoute.params["id"];
+      let token = this.$store.state.user.token;
+      fetch("https://api.tabubot.brainyxs.com/ingame/" + code + "/cardSkip", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      })
+          .then(data => data.json())
+          .then(data => {
+            this.$store.state.snackbar.color = "green";
+            if (data.Status == "WARNING") {
+              this.$store.state.snackbar.color = "orange";
+            }
+            if (data.Status == "ERROR") {
+              this.$store.state.snackbar.color = "red";
+            }
+            this.$store.state.snackbar.message = data.Message;
+            this.$store.state.snackbar.timeout = 1000;
+            this.$store.state.snackbar.show = true;
+          })
     },
     Stop() {
       this.eventSource.close();
@@ -276,7 +336,7 @@ export default {
 }
 
 .uname {
- font-size: 125%;
+  font-size: 125%;
   font-weight: bolder;
   color: #9dfc95;
   display: inline;
