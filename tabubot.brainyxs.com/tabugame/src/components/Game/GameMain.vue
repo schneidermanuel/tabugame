@@ -33,11 +33,11 @@
         </div>
         <div class="actions">
           <div class="time">{{ Timer.Display }}</div>
-          <v-btn color="green" v-if="isMyTurn && !isInTurn" v-on:click="startTurnCommand">
+          <v-btn color="green" v-if="isMyTurn && !Timer.IsActive" v-on:click="startTurnCommand">
             <font-awesome-icon icon="play"/>
             Start!
           </v-btn>
-          <div v-if="isMyTurn && isInTurn">
+          <div v-if="isMyTurn && Timer.IsActive">
             <v-btn color="red">
               <font-awesome-icon icon="trash"/>
               Skip card
@@ -72,7 +72,6 @@ export default {
       redPlayers: [],
       currentPlayername: null,
       isMyTurn: false,
-      isInTurn: false,
       Card: {
         Visible: false,
         Title: "Testwert",
@@ -177,14 +176,12 @@ export default {
 
     },
     StartTimer(timestamp) {
-      this.isInTurn = true;
       this.Timer.IsActive = true;
       this.Timer.InitialTimestamp = timestamp;
       let ellapsed = (Date.now() - new Date(this.Timer.InitialTimestamp * 1000)) / 1000;
       if (ellapsed > 2 * 60) {
         this.Timer.IsActive = false;
       }
-      console.log("Start sä timer")
       this.Tick();
     },
     Tick() {
@@ -220,7 +217,12 @@ export default {
       })
           .then(data => data.json())
           .then(data => {
-
+            if (data.Status == "ERROR") {
+              this.$store.state.snackbar.color = "red";
+              this.$store.state.snackbar.message = data.Message;
+              this.$store.state.snackbar.timeout = 1000;
+              this.$store.state.snackbar.show = true;
+            }
           });
     },
     Stop() {

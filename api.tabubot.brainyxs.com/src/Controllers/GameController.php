@@ -53,7 +53,7 @@ class GameController
         $timerEndFilter->EventType = "TIMEREND";
         $timerEndQuery = $this->logStore->LoadWithFilter($timerEndFilter);
         if (count($timerEndQuery) > 0) {
-            die();
+            Response::Send("Timer already ended", "INFO");
         }
 
         $timerEndEntity = new GameActionEntity();
@@ -62,6 +62,8 @@ class GameController
         $timerEndEntity->EventType = "TIMEREND";
         $timerEndEntity->PlayerId = $timerStartEntity->PlayerId;
         $this->logStore->SaveOrUpdate($timerEndEntity);
+        $this->SetNewPlayerActive($game);
+        Response::Send(new \stdClass());
 
 
     }

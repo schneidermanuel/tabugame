@@ -14,6 +14,10 @@ class Event
 
     public static function SendData($data, $type = null)
     {
+        if (!isset($data))
+        {
+            return;
+        }
         $res = new \stdClass();
         $res->Type = $type;
         $res->Content = $data;
