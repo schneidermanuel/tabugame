@@ -223,6 +223,8 @@ export default {
   align-items: center;
   min-height: 100px;
   min-width: 20%;
+  border: 3px solid rgba(199,225,255,1);
+  filter: drop-shadow(0 0 1rem rgba(255,244,77,1));
 }
 
 .host {

@@ -5,7 +5,8 @@
         Blue: 0 Points
       </v-col>
       <v-col cols="8" class="text-center">
-        {{ currentPlayername }}'s Turn
+        <div class="uname">{{ currentPlayername }}</div>
+        's Turn
       </v-col>
       <v-col cols="2">
         Red: 0 Points
@@ -181,6 +182,7 @@ export default {
       let ellapsed = (Date.now() - new Date(this.Timer.InitialTimestamp * 1000)) / 1000;
       if (ellapsed > 2 * 60) {
         this.Timer.IsActive = false;
+        this.isMyTurn = false;
       }
       this.Tick();
     },
@@ -253,9 +255,11 @@ export default {
   background-color: #9fff5e;
   aspect-ratio: 0.8;
   width: clamp(2.5rem, 50%, 20rem);
-  border-radius: 6px;
+  border-radius: 8px;
   text-align: center;
   color: #3d424a;
+  border: 3px solid black;
+  filter: drop-shadow(0 0 1em greenyellow);
 }
 
 .hidden {
@@ -269,5 +273,13 @@ export default {
 
 .actions * {
   margin: 8px;
+}
+
+.uname {
+ font-size: 125%;
+  font-weight: bolder;
+  color: #9dfc95;
+  display: inline;
+  filter: drop-shadow(0 0 0.5em greenyellow);
 }
 </style>

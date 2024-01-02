@@ -6,7 +6,7 @@
         dark
     >
       <div class="d-flex align-center">
-        <h1>Tabugame&emsp;</h1>
+        <v-btn text href="/"><h1>Tabugame&emsp;</h1></v-btn>
         <h4>by BrainyXS</h4>
       </div>
 
@@ -67,7 +67,7 @@ export default {
         this.$store.state.loading = false;
         this.$store.state.inited = true;
       }
-    }
+    },
   },
   async created() {
     this.init();
@@ -78,7 +78,9 @@ export default {
 
 <style>
 #app {
-  background-color: #3d424a;
+  height: 100vh;
+
+  background: linear-gradient(45deg,rgba(29,61,21,1), rgba(12,44,46,1));
 }
 
 .container {
